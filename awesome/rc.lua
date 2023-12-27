@@ -18,13 +18,15 @@ local wibox         = require("wibox")
 local beautiful     = require("beautiful")
 local naughty       = require("naughty")
 local lain          = require("lain")
---local menubar       = require("menubar")
+local menubar       = require("menubar")
 local freedesktop   = require("freedesktop")
 local hotkeys_popup = require("awful.hotkeys_popup")
                       require("awful.hotkeys_popup.keys")
 local mytable       = awful.util.table or gears.table -- 4.{0,1} compatibility
 
+local volume_control = require("volume-control")
 -- }}}
+volumecfg = volume_control({})
 
 -- {{{ Error handling
 
@@ -100,7 +102,7 @@ local themes = {
 local chosen_theme = themes[7]
 local modkey       = "Mod4"
 local altkey       = "Mod1"
-local terminal     = "urxvtc"
+local terminal     = "kitty"
 local vi_focus     = false -- vi-like client focus https://github.com/lcpz/awesome-copycats/issues/275
 local cycle_prev   = true  -- cycle with only the previously focused client or all https://github.com/lcpz/awesome-copycats/issues/274
 local editor       = os.getenv("EDITOR") or "nvim"
@@ -364,9 +366,9 @@ globalkeys = mytable.join(
     awful.key({ modkey }, "p", function() menubar.show() end,
               {description = "show the menubar", group = "launcher"}),
 
-    awful.key({}, "XF86AudioRaiseVolume", function() volumecfg:up() end),
-    awful.key({}, "XF86AudioLowerVolume", function() volumecfg:down() end),
-    awful.key({}, "XF86AudioMute",        function() volumecfg:toggle() end),
+    awful.key({}, "XF86AudioLowerVolume", function() os.execute("pactl set-sink-volume 0 -5%") end),
+    awful.key({}, "XF86AudioRaiseVolume", function() os.execute("pactl set-sink-volume 0 +5%") end),
+    awful.key({}, "XF86AudioMute", function() os.execute("pactl set-sink-mute 0 toggle") end),
 
     awful.key({}, "XF86AudioPlay", function () os.execute("playerctl play-pause") end),
     awful.key({}, "XF86AudioNext", function () os.execute("playerctl next") end),
@@ -375,7 +377,14 @@ globalkeys = mytable.join(
     awful.key({}, "XF86MonBrightnessUp", function() os.execute("brightnessctl set 10%+") end),
     awful.key({}, "XF86MonBrightnessDown", function() os.execute("brightnessctl set 10%-") end),
 
-    awful.key({ "Control" }, "Tab", function() os.execute("rofi -show window") end)
+    awful.key({ "Control" }, "Tab", function() os.execute("rofi -show window") end),
+
+    awful.key({ altkey }, "m",
+        function ()
+            os.execute(string.format("amixer -q set %s toggle", beautiful.volume.togglechannel or beautiful.volume.channel))
+            beautiful.volume.update()
+        end,
+        {description = "toggle mute", group = "hotkeys"})
 
     -- awful.key({}, "XF86AudioPlay", function () awful.util.spawn("mpc toggle") end),
     -- awful.key({}, "XF86AudioNext", function () awful.util.spawn("mpc next") end),
